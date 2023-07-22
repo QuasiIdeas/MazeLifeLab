@@ -36,7 +36,7 @@ According to some experts this is the true path to achieve AGI.
 
 # Current goal (22/07/2023)
 Idea is to localize and simpilfy the RRT building procces in terms of exploration and number of operations. Get rid of slow runge-kutta calculations. And give agents ability to send sound or light signals for communication using simple language.
-So this would be imitation of social interaction when agents naturally find the way to communicate with each other and how to find a way through the maze.
+So this would be an imitation of social interaction when agents naturally find the way to communicate with each other and how to find a way through the maze.
   
 Литература:
 * Nonlinear Dynamics And Chaos With Applications To Physics, Biology, Chemistry, And Engineering by Steven H. Strogatz
