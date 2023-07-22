@@ -25,7 +25,7 @@ In the first phases of the current project in 2020 than coronavirus was a popula
 First idea was to create car-like robots that can park in particular slots. At that time this project goal was inspired by my job at that time in the Luxoft company.
 I discovered and implement Rapid Exploring Random Trees. But they  was really stone-like in the machine learning sense.
 So I started to find ways how I can extend the rrt idea. I wrote a little hack that spread the reward across the RRT in the maze.
-When I start to train agents to get a reward like checkpoints in the race. This gives me initial results.
+When I start to train agents to get a reward like checkpoints in the race. This gave me the initial results.
 But the agents were so dumb. They frequently hit the walls. I dont realise that was the failure related to my not outstanding experience in machine learning.
 I use reinforcement learning instead of imitation learning. 
 For training the bots i'm using a machine learning environment provided by mlagents developers.
