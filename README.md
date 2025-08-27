@@ -49,3 +49,84 @@ So this would be an imitation of social interaction when agents naturally find t
 * Baldassarre, G., Trianni, V., Bonani, M., Mondada, F., Dorigo, M., & Nolfi, S. (2007). Self-organized coordinated motion in groups of physically connected robots
 * [Self-Organization and Artificial Life](https://direct.mit.edu/artl/article/26/3/391/93243/Self-Organization-and-Artificial-Life)
   
+  
+# 🚗 Maze AI Project
+
+## 🎯 Project Overview
+This project is a revival of my old **BallPark** idea, but this time powered by **AI and ML-Agents**.  
+The goal is to explore algorithms of **path planning, reinforcement learning, and artificial life** in maze environments.  
+
+It combines:  
+- 🌀 Procedural maze generation (`MazeGen.cs`)  
+- 🌳 Path planning via **Rapidly-Exploring Random Trees (RRT)** (`Rrt.cs`)  
+- 🤖 Intelligent agents that can **scan, learn, and communicate** (`AgentControl.cs`)  
+- 🧠 Integration with **Unity ML-Agents** (reinforcement learning, imitation learning)  
+
+---
+
+## 🚀 MVP Plan
+
+### Phase 1. Core mechanics
+- [x] Simple car/agent movement in Unity  
+- [x] Basic procedural maze generation  
+- [ ] Manual control mode (keyboard/joystick)  
+- [ ] Visualize walls and trajectories  
+
+### Phase 2. Path planner
+- [ ] Implement RRT planner (without Runge-Kutta integration at first)  
+- [ ] Visualize search tree in real-time  
+- [ ] Switch modes: **Manual ↔ RRT**  
+
+### Phase 3. AI Integration
+- [ ] Connect **Unity ML-Agents** (Python backend + Unity simulation)  
+- [ ] Define basic reward (e.g. reaching checkpoints, avoiding walls)  
+- [ ] Train an agent to navigate the maze  
+
+### Phase 4. Multi-agent experiments
+- [ ] Run multiple agents simultaneously  
+- [ ] Add simple communication (light / sound signals)  
+- [ ] Compare strategies: **RRT vs RL vs emergent swarm behavior**  
+
+---
+
+## 📋 Requirements
+
+### Functional
+- Agent can move in a 3D maze  
+- Maze is procedurally generated  
+- Path planning via RRT  
+- RL training with ML-Agents  
+- Switchable modes: Manual / RRT / RL  
+- Multi-agent support with basic communication  
+
+### Non-functional
+- Runs in real-time on an average laptop  
+- Modular code structure (Agents / Maze / Planners)  
+- Documented workflow in README  
+- Simple visualization with Unity Gizmos and Debug.DrawLine  
+
+---
+
+## 🛠 Tech Stack
+- **Unity 2022+**  
+- **C#** (agents, maze, planners)  
+- **Python 3.10+** (training logic with PyTorch via ML-Agents)  
+- **ML-Agents Toolkit**  
+
+---
+
+## 📚 References
+- Strogatz, *Nonlinear Dynamics and Chaos*  
+- Rapidly-Exploring Random Trees: Progress and Prospects  
+- [Unity ML-Agents](https://github.com/Unity-Technologies/ml-agents)  
+- Turgut et al., *Self-organized flocking in mobile robot swarms*  
+- Trianni & Dorigo, *Self-organisation and communication in groups of simulated robots*  
+
+---
+
+## 🌌 Vision
+The long-term vision is to create a **virtual lab of artificial life**:  
+- Agents that evolve navigation strategies  
+- Communication and cooperation in swarms  
+- A bridge between **AI, robotics, and computational physics**  
+ 
