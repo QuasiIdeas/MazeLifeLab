@@ -8,6 +8,7 @@ namespace MazeLifeLab
     /// <summary>
     /// Central manager to orchestrate planning and execution.
     /// Hotkeys: M toggle Manual/Auto, 1 Tape executor, 2 Tracker executor, R replan, Esc stop.
+    /// Additional debug hotkeys: O = orientation diagnostic, I = toggle InvertSteer (tape), F = toggle FrontWheelDrive (tape).
     /// </summary>
     public sealed class RRTManager : MonoBehaviour
     {
@@ -36,6 +37,11 @@ namespace MazeLifeLab
         // detection helpers
         Transform detectedMazeWalls = null;
         int lastMazeWallsChildCount = -1;
+
+        // debug visualization
+        bool debugDrawInitDir = false;
+        Vector3 debugTrajDir = Vector3.zero;
+        Vector3 debugCarFwd = Vector3.forward;
 
         void Start()
         {
@@ -86,7 +92,7 @@ namespace MazeLifeLab
                     if (wallObj.childCount >= 2)
                     {
                         bool childsHaveCollider = false;
-                        for (int j = 0; j < wallObj.childCount; j++) if (wallObj.GetChild(j).GetComponent<BoxCollider>() != null) { childsHaveCollider = true; break; }
+                        for (int j = 0; j < wallObj.childcount; j++) if (wallObj.GetChild(j).GetComponent<BoxCollider>() != null) { childsHaveCollider = true; break; }
                         if (!childsHaveCollider)
                         {
                             var pts = new List<Vector2>();
@@ -138,7 +144,6 @@ namespace MazeLifeLab
         {
             if (!AutoFindMazeWalls) return;
 
-            // If explicit groups provided in inspector, do not override, but still watch MazeWalls for updates
             var go = GameObject.Find("MazeWalls");
             if (go == null)
             {
@@ -147,7 +152,6 @@ namespace MazeLifeLab
                 return;
             }
 
-            // If MazeWalls found and not yet in the WallPointsGroups list, add it
             bool contains = false;
             for (int i = 0; i < WallPointsGroups.Count; i++) if (WallPointsGroups[i] == go.transform) { contains = true; break; }
             if (!contains && WallPointsGroups.Count == 0)
@@ -156,7 +160,6 @@ namespace MazeLifeLab
                 BuildWallsFromGroups();
             }
 
-            // track changes: if child count changed, rebuild
             if (detectedMazeWalls != go.transform)
             {
                 detectedMazeWalls = go.transform;
@@ -176,6 +179,28 @@ namespace MazeLifeLab
         void Update()
         {
             TryAutoAttachMazeWalls();
+
+            // debug hotkeys
+            if (Input.GetKeyDown(KeyCode.O)) // orientation diagnostic
+            {
+                RunOrientationDiagnostic();
+            }
+            if (Input.GetKeyDown(KeyCode.I)) // toggle invert steer on tape executor
+            {
+                if (exec is TapeExecutor te)
+                {
+                    te.InvertSteer = !te.InvertSteer;
+                    Debug.Log($"TapeExecutor.InvertSteer = {te.InvertSteer}");
+                }
+            }
+            if (Input.GetKeyDown(KeyCode.F)) // toggle FWD/RWD
+            {
+                if (exec is TapeExecutor te)
+                {
+                    te.FrontWheelDrive = !te.FrontWheelDrive;
+                    Debug.Log($"TapeExecutor.FrontWheelDrive = {te.FrontWheelDrive}");
+                }
+            }
 
             if (Input.GetKeyDown(KeyCode.M))
             {
@@ -295,6 +320,40 @@ namespace MazeLifeLab
                 Gizmos.color = Color.green;
                 for (int i = 0; i < pts.Length - 1; i++) Gizmos.DrawLine(pts[i], pts[i + 1]);
             }
+
+            // debug arrows
+            if (debugDrawInitDir)
+            {
+                Gizmos.color = Color.cyan;
+                Gizmos.DrawLine(CarRoot.position, CarRoot.position + debugCarFwd.normalized * 2f);
+                Gizmos.color = Color.magenta;
+                Gizmos.DrawLine(CarRoot.position, CarRoot.position + debugTrajDir.normalized * 2f);
+            }
         }
+
++        void RunOrientationDiagnostic()
++        {
++            if (CarRoot == null)
++            {
++                Debug.LogWarning("RunOrientationDiagnostic: CarRoot is null");
++                return;
++            }
++            if (lastTraj == null || lastTraj.Count < 2)
++            {
++                Debug.LogWarning("RunOrientationDiagnostic: no trajectory available");
++                return;
++            }
++            // compute initial trajectory direction
++            var a = lastTraj.S[0];
++            var b = lastTraj.S[Math.Min(1, lastTraj.S.Count - 1)];
++            Vector3 trajDir = new Vector3(b.X - a.X, 0f, b.Y - a.Y);
++            Vector3 carFwd = CarRoot.forward; carFwd.y = 0f;
++            float ang = Vector3.SignedAngle(carFwd.normalized, trajDir.normalized, Vector3.up);
++            Debug.Log($"Orientation diagnostic: angle from car forward to traj = {ang:F1} deg. CarFwd={carFwd}, TrajDir={trajDir}");
++            debugDrawInitDir = true;
++            debugTrajDir = trajDir;
++            debugCarFwd = carFwd;
++        }
++
     }
 }
