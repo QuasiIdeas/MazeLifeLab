@@ -1,0 +1,66 @@
+Привет — краткое сообщение для веб-версии (GPT-5) о том, что было сделано в проекте и как можно продолжать работу.
+
+Что я добавил (новые файлы и компоненты):
+- Assets/Scripts/MazeLifeLab/Core/Types.cs
+  - CarState, CarControl, Mathx (WrapAngle, Clamp), Trajectory (T,S, Append, SampleByTime, NearestByArc, ToWorldPolyline).
+- Assets/Scripts/MazeLifeLab/Core/Dynamics.cs
+  - Dynamics: kinematic bicycle, F(s,u), RK4 integrator, curvature and speed-limit helpers.
+- Assets/Scripts/MazeLifeLab/Collision/Collision2D.cs
+  - Collision2D: footprint rectangle vs wall polylines, SegmentRolloutCollides, DistancePointToSegment.
+- Assets/Scripts/MazeLifeLab/Interfaces.cs
+  - IRRTPlanner, IExecutor and placeholders for future obstacle/time APIs.
+- Assets/Scripts/MazeLifeLab/Planning/RRTPlanner.cs
+  - Kinodynamic RRT using Dynamics.RK4, piecewise-constant controls, control set, ExtractTrajectory/ExtractTape.
+- Assets/Scripts/MazeLifeLab/Control/TapeExecutor.cs
+  - Simple tape playback to WheelColliders (steerAngle in degrees, motor/brake mapping).
+- Assets/Scripts/MazeLifeLab/Control/TrackerExecutor.cs
+  - Pure Pursuit steering + PI speed controller, applies to WheelColliders.
+- Assets/Scripts/MazeLifeLab/Managers/RRTManager.cs
+  - MonoBehaviour to orchestrate: auto-detect MazeWalls, build wall polylines, begin planning, run planner coroutine, start executors, draw walls & final path gizmos, hotkeys.
+- Assets/Scripts/MazeLifeLab/UI/DebugHUD.cs
+  - Simple IMGUI HUD showing planner/executor stats.
+
+Как это работает сейчас (важно для web-перехода):
+1) MazeGen (Assets/Scripts/MazeGen.cs) создаёт GameObject "MazeWalls" и внутри него создаёт кубы (Primitive Cube) с BoxCollider для каждой стены.
+2) RRTManager автоматически ищет объект с именем "MazeWalls" (если AutoFindMazeWalls=true и WallPointsGroups пуст) и добавляет его в WallPointsGroups. Также отслеживает изменение числа детей в MazeWalls и при изменении вызывает BuildWallsFromGroups().
+3) BuildWallsFromGroups() умеет:
+   - читать поли-линии из группы дочерних точек (если у детей нет BoxCollider) — старый формат,
+   - или конвертировать каждый дочерний BoxCollider (куб) в полилинию из 4 углов в XZ-плоскости для Collision2D.
+4) Collision2D.Walls заполняется полилиниями (List<Vector2[]]) и используется RRTPlanner для быстрого проверки пересечений.
+5) Чтобы запустить планирование: в иерархии положите RRTManager (GameObject с компонентом). Укажите CarRoot, WheelColliders FL/FR/RL/RR и GoalTarget (Transform). Если WallPointsGroups оставить пустым и AutoFindMazeWalls=true, MazeWalls будет подхвачен автоматически.
+6) Горячие клавиши при игре: M — BeginPlanning/stop, R — replan, 1 — запуск TapeExecutor (если есть lastTraj), 2 — запуск TrackerExecutor.
+7) DebugHUD можно добавить в сцену для визуализации NodeCount/HasSolution/Exec errors.
+
+Что проверить/как отладить в веб-интерфейсе:
+- В сцене включите Gizmos: белые линии = стены, зелёная линия = финальная траектория (если найдено решение).
+- Если зелёная линия не рисуется — проверьте DebugHUD.HasSolution и NodeCount; возможно планёр не нашёл путь (узкие проходы, footprint размером больше прохода).
+- Для быстрого теста временно отключите AutoFindMazeWalls или очистите WallPointsGroups, чтобы планёр не учитывал стены — это проверит, что логика планирования работает.
+- Параметры, которые удобно менять из инспектора:
+  - RRTPlanner.MaxNodes (увеличить для сложных лабиринтов),
+  - Collision2D.Inflation / CarLength / CarWidth (уменьшить, если footprint мешает),
+  - RRTManager.UseTracker (выбор исполнительной стратегии),
+  - TrackerExecutor и TapeExecutor параметры (torque mapping, PI gains).
+
+Ограничения и дальнейшие шаги, которые можно поручить веб-версии:
+- Улучшить сборку стен: распознавать не только имя "MazeWalls", но и тег или специальный компонент;
+- Автоматически запускать переплан при перемещении GoalTarget или при регенерации MazeGen (сейчас RRTManager отслеживает только изменение childCount и запускать ручной Replan (R) удобно);
+- Добавить визуализацию дерева RRT (Gizmos для ребёр/отвергнутых ветвей) для отладки;
+- Добавить экспортер/инструмент, чтобы сохранять найденную траекторию (CSV/JSON) и контрол-ленту для внешнего анализа;
+- Добавить unit-tests для Dynamics.RK4 и Collision2D utilities.
+
+Короткая инструкция для следующего разработчика в веб-версии:
+1) Открой проект в Unity, запусти сцену. Убедись, что MazeGen создаёт MazeWalls (имя), и RRTManager.AutoFindMazeWalls=true.
+2) Перемести GoalTarget в сцене, нажми R или M для старта планирования.
+3) Посмотри DebugHUD и Scene Gizmos (белые линии — стены, зелёная — путь).
+4) Для больших лабиринтов увеличь RRTPlanner.MaxNodes и/или ослабь Collision2D.Inflation.
+
+Если нужно, я могу прямо сейчас (через Codex CLI или тебе в web):
+- добавить слежение за перемещением GoalTarget и автопереплан,
+- добавить оповещение в консоль при сборке стен (количество полилиний/сегментов) и при завершении планирования (Nodes, HasSolution, path length),
+- добавить поддержку поиска MazeWalls по тегу или marker component.
+
+---
+Всё изменения закоммичены в локальный git (последние коммиты содержат авто-подхват MazeWalls и поддержку кубов). Файлы с ключевой логикой: Assets/Scripts/MazeLifeLab/**
+
+Если нужна подготовка конкретного PR/patch для веб-версии — скажи формат и я подготовлю краткую diff-нотацию.
+
