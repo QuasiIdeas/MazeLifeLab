@@ -331,29 +331,29 @@ namespace MazeLifeLab
             }
         }
 
-+        void RunOrientationDiagnostic()
-+        {
-+            if (CarRoot == null)
-+            {
-+                Debug.LogWarning("RunOrientationDiagnostic: CarRoot is null");
-+                return;
-+            }
-+            if (lastTraj == null || lastTraj.Count < 2)
-+            {
-+                Debug.LogWarning("RunOrientationDiagnostic: no trajectory available");
-+                return;
-+            }
-+            // compute initial trajectory direction
-+            var a = lastTraj.S[0];
-+            var b = lastTraj.S[Math.Min(1, lastTraj.S.Count - 1)];
-+            Vector3 trajDir = new Vector3(b.X - a.X, 0f, b.Y - a.Y);
-+            Vector3 carFwd = CarRoot.forward; carFwd.y = 0f;
-+            float ang = Vector3.SignedAngle(carFwd.normalized, trajDir.normalized, Vector3.up);
-+            Debug.Log($"Orientation diagnostic: angle from car forward to traj = {ang:F1} deg. CarFwd={carFwd}, TrajDir={trajDir}");
-+            debugDrawInitDir = true;
-+            debugTrajDir = trajDir;
-+            debugCarFwd = carFwd;
-+        }
-+
+       void RunOrientationDiagnostic()
+       {
+           if (CarRoot == null)
+           {
+               Debug.LogWarning("RunOrientationDiagnostic: CarRoot is null");
+               return;
+           }
+           if (lastTraj == null || lastTraj.Count < 2)
+           {
+               Debug.LogWarning("RunOrientationDiagnostic: no trajectory available");
+               return;
+           }
+           // compute initial trajectory direction
+           var a = lastTraj.S[0];
+           var b = lastTraj.S[Math.Min(1, lastTraj.S.Count - 1)];
+           Vector3 trajDir = new Vector3(b.X - a.X, 0f, b.Y - a.Y);
+           Vector3 carFwd = CarRoot.forward; carFwd.y = 0f;
+           float ang = Vector3.SignedAngle(carFwd.normalized, trajDir.normalized, Vector3.up);
+           Debug.Log($"Orientation diagnostic: angle from car forward to traj = {ang:F1} deg. CarFwd={carFwd}, TrajDir={trajDir}");
+           debugDrawInitDir = true;
+           debugTrajDir = trajDir;
+           debugCarFwd = carFwd;
+       }
+
     }
 }
