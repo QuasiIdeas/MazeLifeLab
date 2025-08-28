@@ -92,7 +92,7 @@ namespace MazeLifeLab
                     if (wallObj.childCount >= 2)
                     {
                         bool childsHaveCollider = false;
-                        for (int j = 0; j < wallObj.childcount; j++) if (wallObj.GetChild(j).GetComponent<BoxCollider>() != null) { childsHaveCollider = true; break; }
+                        for (int j = 0; j < wallObj.childCount; j++) if (wallObj.GetChild(j).GetComponent<BoxCollider>() != null) { childsHaveCollider = true; break; }
                         if (!childsHaveCollider)
                         {
                             var pts = new List<Vector2>();
