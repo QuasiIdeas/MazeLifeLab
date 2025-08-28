@@ -107,7 +107,7 @@ namespace MazeLifeLab
             float vMeas = 0f;
             // attempt to read forward speed from carRoot's rigidbody if available
             var rb = carRoot.GetComponent<Rigidbody>();
-            if (rb != null) vMeas = Vector3.Dot(rb.velocity, carRoot.forward);
+            if (rb != null) vMeas = Vector3.Dot(rb.linearVelocity, carRoot.forward);
             float vRef = sRef.V;
             float err = vRef - vMeas;
             integ += err * fixedDt;

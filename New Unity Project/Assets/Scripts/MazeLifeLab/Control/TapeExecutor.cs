@@ -25,7 +25,7 @@ namespace MazeLifeLab
         /// <summary>If true, motor torque is applied to front wheels; otherwise applied to rear wheels.</summary>
         public bool FrontWheelDrive = true;
         /// <summary>Enable debug logging of applied torques/steer.</summary>
-        public bool DebugLog = false;
+        public bool DebugLog = true;
 
         public bool Completed { get; private set; }
         public float LateralError => 0f;
