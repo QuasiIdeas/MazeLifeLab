@@ -33,6 +33,10 @@ namespace MazeLifeLab
         Trajectory lastTraj;
         List<(CarControl u, float dt, int N)> lastTape;
 
+        // detection helpers
+        Transform detectedMazeWalls = null;
+        int lastMazeWallsChildCount = -1;
+
         void Start()
         {
             dyn = new Dynamics();
@@ -126,16 +130,47 @@ namespace MazeLifeLab
             col.SetWalls(walls);
         }
 
+        /// <summary>
+        /// Try to auto-detect a MazeWalls GameObject and attach it to WallPointsGroups.
+        /// Also watches for child-count changes to automatically rebuild wall geometry.
+        /// </summary>
         void TryAutoAttachMazeWalls()
         {
             if (!AutoFindMazeWalls) return;
-            if (WallPointsGroups != null && WallPointsGroups.Count > 0) return;
 
+            // If explicit groups provided in inspector, do not override, but still watch MazeWalls for updates
             var go = GameObject.Find("MazeWalls");
-            if (go == null) return;
-            // add to groups and rebuild
-            WallPointsGroups.Add(go.transform);
-            BuildWallsFromGroups();
+            if (go == null)
+            {
+                detectedMazeWalls = null;
+                lastMazeWallsChildCount = -1;
+                return;
+            }
+
+            // If MazeWalls found and not yet in the WallPointsGroups list, add it
+            bool contains = false;
+            for (int i = 0; i < WallPointsGroups.Count; i++) if (WallPointsGroups[i] == go.transform) { contains = true; break; }
+            if (!contains && WallPointsGroups.Count == 0)
+            {
+                WallPointsGroups.Add(go.transform);
+                BuildWallsFromGroups();
+            }
+
+            // track changes: if child count changed, rebuild
+            if (detectedMazeWalls != go.transform)
+            {
+                detectedMazeWalls = go.transform;
+                lastMazeWallsChildCount = detectedMazeWalls.childCount;
+            }
+            else
+            {
+                int cur = detectedMazeWalls != null ? detectedMazeWalls.childCount : -1;
+                if (cur != lastMazeWallsChildCount)
+                {
+                    lastMazeWallsChildCount = cur;
+                    BuildWallsFromGroups();
+                }
+            }
         }
 
         void Update()
