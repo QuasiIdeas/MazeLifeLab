@@ -1,0 +1,55 @@
+# =============== #
+# Unity generated #
+# =============== #
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Mm]emoryCaptures/
+UserSettings/
+
+# Служебные файлы Rider / VS / VSCode
+.vscode/
+.idea/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+
+# Unity Cache
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Кеш для Addressables
+/[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/*/*.bin*
+/[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/*/*.json
+
+# Автоматические Lightmap-ы
+/[Aa]ssets/[Ll]ightingData.asset
+/[Aa]ssets/[Ll]ightmap-*/
+
+# Build Artifacts
+*.apk
+*.aab
+*.unitypackage
+*.app
+*.exe
+*.xcodeproj/
+*.xcworkspace/
+
+# Crash Reports
+sysinfo.txt
+
+# === OS Specific === #
+.DS_Store
+Thumbs.db
