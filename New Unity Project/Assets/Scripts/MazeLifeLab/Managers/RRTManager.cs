@@ -360,10 +360,32 @@ namespace MazeLifeLab
                Debug.LogWarning("RunOrientationDiagnostic: no trajectory available");
                return;
            }
-           // compute initial trajectory direction
-           var a = lastTraj.S[0];
-           var b = lastTraj.S[Math.Min(1, lastTraj.S.Count - 1)];
-           Vector3 trajDir = new Vector3(b.X - a.X, 0f, b.Y - a.Y);
+            // compute initial trajectory direction: prefer the first state that is a non-zero offset from the root.
+            var a = lastTraj.S[0];
+            Vector3 trajDir = Vector3.zero;
+            for (int i = 1; i < lastTraj.S.Count; i++){
+                var bb = lastTraj.S[i];
+                var d = new Vector3(bb.X - a.X, 0f, bb.Y - a.Y);
+                if (d.sqrMagnitude > 1e-6f) { trajDir = d; break; }
+            }
+            // fallback: try sampling a small time delta ahead if timestamps exist
+            if (trajDir.sqrMagnitude <= 1e-6f && lastTraj.T != null && lastTraj.T.Count >= 1)
+            {
+                float t0 = lastTraj.T[0];
+                float sampleT = t0 + Mathf.Max(0.05f, 0.1f);
+                try
+                {
+                    var s2 = lastTraj.SampleByTime(sampleT);
+                    trajDir = new Vector3(s2.X - a.X, 0f, s2.Y - a.Y);
+                }
+                catch { }
+            }
+
+            if (trajDir.sqrMagnitude <= 1e-6f)
+            {
+                Debug.LogWarning("RunOrientationDiagnostic: trajectory direction is degenerate (all initial samples identical).");
+                return;
+            }
            Vector3 carFwd = CarRoot.forward; carFwd.y = 0f;
            float ang = Vector3.SignedAngle(carFwd.normalized, trajDir.normalized, Vector3.up);
            Debug.Log($"Orientation diagnostic: angle from car forward to traj = {ang:F1} deg. CarFwd={carFwd}, TrajDir={trajDir}");
@@ -374,4 +396,3 @@ namespace MazeLifeLab
 
     }
 }
-
