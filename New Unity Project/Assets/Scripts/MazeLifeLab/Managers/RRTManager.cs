@@ -378,7 +378,7 @@ namespace MazeLifeLab
            }
             // compute initial trajectory direction: prefer the first state that is a non-zero offset from the root.
             var a = lastTraj.S[0];
-            Debug.Log($"RunOrientationDiagnostic: traj samples={lastTraj.Count}, Tcount={(lastTraj.T!=null? lastTraj.T.Count : 0)}")
+            Debug.Log($"RunOrientationDiagnostic: traj samples={lastTraj.Count}, Tcount={(lastTraj.T!=null? lastTraj.T.Count : 0)}");
             Vector3 trajDir = Vector3.zero;
             for (int i = 1; i < lastTraj.S.Count; i++){
                 var bb = lastTraj.S[i];
