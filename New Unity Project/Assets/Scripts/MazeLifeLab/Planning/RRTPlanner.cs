@@ -16,11 +16,11 @@ namespace MazeLifeLab
         /// <summary>Time step for integration (s).</summary>
         public float Dt = 0.05f;
         /// <summary>Duration of each edge (s).</summary>
-        public float EdgeTime = 0.75f;
+        public float EdgeTime = 1.00f;
         /// <summary>Percent chance to sample the goal directly [0..100].</summary>
         public int GoalBiasPercent = 10;
         /// <summary>Maximum nodes allowed.</summary>
-        public int MaxNodes = 8000;
+        public int MaxNodes = 20000;
         /// <summary>Weights for nearest metric (pos, theta, v).</summary>
         public float Wx = 1f, Wtheta = 0.5f, Wv = 0.2f;
 

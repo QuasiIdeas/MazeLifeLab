@@ -17,6 +17,7 @@ namespace MazeLifeLab
         float steerDeg = 0f;
         float motorTorque = 0f, brakeTorque = 0f;
         CarController carCtrl = null;
+        bool autoSteerChecked = false;
 
         public float MaxMotorTorque = 1200f;
         public float MaxBrakeTorque = 2500f;
@@ -46,10 +47,7 @@ namespace MazeLifeLab
             carCtrl = null;
         }
 
-        public void Stop()
-        {
-            Completed = true;
-        }
+        // Stop is implemented later to also release external control when needed.
 
         public void TickFixed(float fixedDt, Transform carRoot, WheelCollider fl, WheelCollider fr, WheelCollider rl, WheelCollider rr)
         {
@@ -80,6 +78,32 @@ namespace MazeLifeLab
             // if a CarController exists, prefer using its external control API so it doesn't overwrite our commands
             if (carRoot != null && carCtrl == null)
                 carCtrl = carRoot.GetComponent<CarController>();
+
+            // auto-detect steer sign once when we have a car controller and a trajectory
+            if (!autoSteerChecked && carCtrl != null && traj != null && traj.Count > 1 && tape != null && tape.Count > 0)
+            {
+                // compute trajDir similar to RunOrientationDiagnostic: find first non-zero offset
+                var a = traj.S[0];
+                UnityEngine.Vector3 trajDir = UnityEngine.Vector3.zero;
+                for (int i = 1; i < traj.S.Count; i++)
+                {
+                    var bb = traj.S[i];
+                    var d = new UnityEngine.Vector3(bb.X - a.X, 0f, bb.Y - a.Y);
+                    if (d.sqrMagnitude > 1e-6f) { trajDir = d; break; }
+                }
+                if (trajDir.sqrMagnitude > 1e-6f)
+                {
+                    float ang = UnityEngine.Vector3.SignedAngle(carRoot.forward, trajDir, UnityEngine.Vector3.up);
+                    float u0 = tape[0].u.Steer; // radians
+                    // if angle and first steer have opposite signs, invert steer
+                    if (ang * u0 < 0f)
+                    {
+                        InvertSteer = !InvertSteer;
+                        if (DebugLog) Debug.Log($"TapeExecutor: auto InvertSteer set to {InvertSteer} (ang={ang:F1}, u0={u0:F3})");
+                    }
+                }
+                autoSteerChecked = true;
+            }
 
             if (carCtrl != null)
             {
