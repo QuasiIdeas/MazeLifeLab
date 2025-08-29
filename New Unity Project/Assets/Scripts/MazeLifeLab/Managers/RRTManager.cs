@@ -50,6 +50,13 @@ namespace MazeLifeLab
             BuildWallsFromGroups();
             planner = new RRTPlanner(dyn, col, new System.Random());
             exec = null;
+
+            // ensure telemetry recorder exists and is configured automatically
+            var tr = GetComponent<TelemetryRecorder>();
+            if (tr == null) tr = gameObject.AddComponent<TelemetryRecorder>();
+            tr.Manager = this;
+            if (tr.CarRoot == null) tr.CarRoot = CarRoot;
+            if (tr.FL == null) { tr.FL = FL; tr.FR = FR; tr.RL = RL; tr.RR = RR; }
         }
 
         /// <summary>
