@@ -38,6 +38,12 @@ public class CarController : MonoBehaviour
     float steerInput;
     float throttleInput;
     bool braking;
+    // When true, external controller (executor) supplies steer/motor/brake via ApplyExternalControl
+    public bool ExternalControl = false;
+    // last external commands (for visualization / fixed update)
+    float extSteerDeg = 0f;
+    float extMotor = 0f;
+    float extBrake = 0f;
 
     void Awake()
     {
@@ -103,6 +109,13 @@ public class CarController : MonoBehaviour
 
     void HandleSteering()
     {
+        if (ExternalControl)
+        {
+            wheelFL.steerAngle = extSteerDeg;
+            wheelFR.steerAngle = extSteerDeg;
+            return;
+        }
+
         float steer = steerInput * maxSteerAngle;
         wheelFL.steerAngle = steer;
         wheelFR.steerAngle = steer;
@@ -110,6 +123,13 @@ public class CarController : MonoBehaviour
 
     void HandleDrive()
     {
+        if (ExternalControl)
+        {
+            wheelRL.motorTorque = extMotor;
+            wheelRR.motorTorque = extMotor;
+            return;
+        }
+
         // Начни с заднего привода — устойчивее
         float torque = throttleInput * motorTorque;
         wheelRL.motorTorque = torque;
@@ -122,6 +142,19 @@ public class CarController : MonoBehaviour
 
     void HandleBrakes()
     {
+        if (ExternalControl)
+        {
+            wheelFL.brakeTorque = extBrake;
+            wheelFR.brakeTorque = extBrake;
+            wheelRL.brakeTorque = extBrake;
+            wheelRR.brakeTorque = extBrake;
+            if (extBrake > 0f)
+            {
+                wheelFL.motorTorque = 0f; wheelFR.motorTorque = 0f; wheelRL.motorTorque = 0f; wheelRR.motorTorque = 0f;
+            }
+            return;
+        }
+
         float bt = braking ? brakeTorque : 0f;
         wheelFL.brakeTorque = bt;
         wheelFR.brakeTorque = bt;
@@ -181,5 +214,24 @@ public class CarController : MonoBehaviour
         col.GetWorldPose(out Vector3 pos, out Quaternion rot);
         mesh.position = pos;
         mesh.rotation = rot;
+    }
+
+    /// <summary>
+    /// Apply external control values (called by executors). steerDeg in degrees.
+    /// When invoked, ExternalControl will be used to apply these commands in FixedUpdate.
+    /// </summary>
+    public void ApplyExternalControl(float steerDeg, float motor, float brake)
+    {
+        ExternalControl = true;
+        extSteerDeg = steerDeg;
+        extMotor = motor;
+        extBrake = brake;
+    }
+
+    /// <summary>Disable external control and return to player input.</summary>
+    public void ReleaseExternalControl()
+    {
+        ExternalControl = false;
+        extSteerDeg = extMotor = extBrake = 0f;
     }
 }
