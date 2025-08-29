@@ -232,12 +232,15 @@ namespace MazeLifeLab
         {
             if (CarRoot == null || GoalTarget == null) return;
             // set start from CarRoot (rear axle at transform position)
-            Vector3 p = CarRoot.position; float yaw = CarRoot.eulerAngles.y * Mathf.Deg2Rad;
+            Vector3 p = CarRoot.position;
+            // compute theta from the transform forward vector to match planner convention (theta=0 -> +X)
+            float yaw = Mathf.Atan2(CarRoot.forward.z, CarRoot.forward.x);
             var rb = CarRoot.GetComponent<Rigidbody>();
             float v = 0f; if (rb != null) v = Vector3.Dot(rb.velocity, CarRoot.forward);
-            start = new CarState(p.x, p.z, yaw, v);
-            Vector3 gp = GoalTarget.position; float gyaw = GoalTarget.eulerAngles.y * Mathf.Deg2Rad;
-            goal = new CarState(gp.x, gp.z, gyaw, 0f);
+            start = new CarState(p.x, p.z, Mathx.WrapAngle(yaw), v);
+            Vector3 gp = GoalTarget.position;
+            float gyaw = Mathf.Atan2(GoalTarget.forward.z, GoalTarget.forward.x);
+            goal = new CarState(gp.x, gp.z, Mathx.WrapAngle(gyaw), 0f);
 
             planner.Reset(start, goal);
             if (planLoop != null) StopCoroutine(planLoop);
