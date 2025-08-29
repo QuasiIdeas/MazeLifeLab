@@ -378,7 +378,8 @@ namespace MazeLifeLab
                 if (planner != null)
                 {
                     int it = 0;
-                    int limit = planner.MaxNodes;
+                    var rp = planner as RRTPlanner;
+                    int limit = (rp != null) ? rp.MaxNodes : 8000;
                     while (!planner.HasSolution && planner.NodeCount < limit && it++ < 2000) planner.Step(256);
                     Debug.Log($"RunPlanner finished: Nodes={planner.NodeCount}, HasSolution={planner.HasSolution}");
                     if (planner.HasSolution) { lastTraj = planner.ExtractTrajectory(); lastTape = planner.ExtractTape(); }
