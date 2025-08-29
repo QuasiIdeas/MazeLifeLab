@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using UnityEngine;
+using System.Globalization;
 
 namespace MazeLifeLab
 {
@@ -90,13 +91,13 @@ namespace MazeLifeLab
             }
 
             // CSV line
-            writer.Write(t.ToString("F3") + ",");
+            writer.Write(t.ToString("F3", CultureInfo.InvariantCulture) + ",");
             writer.Write(string.Join(",", new string[] {
-                x.ToString("F3"), y.ToString("F3"), th.ToString("F4"), v.ToString("F3"),
-                sfl.ToString("F3"), sfr.ToString("F3"),
-                mfl.ToString("F3"), mfr.ToString("F3"), mrl.ToString("F3"), mrr.ToString("F3"),
-                bfl.ToString("F3"), bfr.ToString("F3"), brl.ToString("F3"), brr.ToString("F3"),
-                nodes.ToString(), hasSol ? "1":"0", execCompleted ? "1":"0", lat.ToString("F3"), head.ToString("F3")
+                x.ToString("F3", CultureInfo.InvariantCulture), y.ToString("F3", CultureInfo.InvariantCulture), th.ToString("F4", CultureInfo.InvariantCulture), v.ToString("F3", CultureInfo.InvariantCulture),
+                sfl.ToString("F3", CultureInfo.InvariantCulture), sfr.ToString("F3", CultureInfo.InvariantCulture),
+                mfl.ToString("F3", CultureInfo.InvariantCulture), mfr.ToString("F3", CultureInfo.InvariantCulture), mrl.ToString("F3", CultureInfo.InvariantCulture), mrr.ToString("F3", CultureInfo.InvariantCulture),
+                bfl.ToString("F3", CultureInfo.InvariantCulture), bfr.ToString("F3", CultureInfo.InvariantCulture), brl.ToString("F3", CultureInfo.InvariantCulture), brr.ToString("F3", CultureInfo.InvariantCulture),
+                nodes.ToString(), hasSol ? "1":"0", execCompleted ? "1":"0", lat.ToString("F3", CultureInfo.InvariantCulture), head.ToString("F3", CultureInfo.InvariantCulture)
             }));
             writer.WriteLine();
 

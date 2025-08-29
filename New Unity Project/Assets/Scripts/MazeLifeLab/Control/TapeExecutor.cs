@@ -23,7 +23,7 @@ namespace MazeLifeLab
         public float MaxBrakeTorque = 2500f;
         public float AccelToTorque = 400f;
         /// <summary>If true, invert steering sign when applying to WheelColliders (useful when wheel orientation differs).</summary>
-        public bool InvertSteer = false;
+        public bool InvertSteer = true;
         /// <summary>If true, motor torque is applied to front wheels; otherwise applied to rear wheels.</summary>
         public bool FrontWheelDrive = true;
         /// <summary>Enable debug logging of applied torques/steer.</summary>
@@ -66,15 +66,11 @@ namespace MazeLifeLab
             var u = seg.u;
             // steer in degrees for WheelCollider
             steerDeg = u.Steer * Mathf.Rad2Deg * (InvertSteer ? -1f : 1f);
-            float torque = Mathf.Clamp(u.Accel * AccelToTorque, -MaxBrakeTorque, MaxMotorTorque);
-            if (torque >= 0f)
-            {
-                motorTorque = torque; brakeTorque = 0f;
-            }
-            else
-            {
-                motorTorque = 0f; brakeTorque = Mathf.Abs(torque);
-            }
+            // compute drive torque: allow reverse by negative motorTorque, no separate brake
+            float torqueRaw = u.Accel * AccelToTorque;
+            float torque = Mathf.Clamp(torqueRaw, -MaxMotorTorque, MaxMotorTorque);
+            motorTorque = torque;
+            brakeTorque = 0f;
             // if a CarController exists, prefer using its external control API so it doesn't overwrite our commands
             if (carRoot != null && carCtrl == null)
                 carCtrl = carRoot.GetComponent<CarController>();

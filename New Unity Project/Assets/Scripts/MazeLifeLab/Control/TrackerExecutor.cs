@@ -4,14 +4,19 @@ using UnityEngine;
 
 namespace MazeLifeLab
 {
-    /// <summary>
-    /// Trajectory tracker using Pure Pursuit steering and PI speed control.
-    /// Applies outputs to WheelColliders.
-    /// </summary>
+        /// <summary>
+        /// Trajectory tracker using Pure Pursuit steering and PI speed control.
+        /// Applies outputs to WheelColliders.
+        /// New: clamps steering to MaxSteerAngle and increases default lookahead to soften initial turns.
+        /// </summary>
     public sealed class TrackerExecutor : IExecutor
     {
-        public float LookaheadMin = 1.5f;
+        /// <summary>Minimum lookahead distance (m). Increase to soften sharp initial turns.</summary>
+        public float LookaheadMin = 2.5f;
+        /// <summary>Gain on speed for lookahead distance: Ld = max(LookaheadMin, LookaheadK * |v|).</summary>
         public float LookaheadK = 0.5f;
+        /// <summary>Maximum steering angle (deg) to apply. Clamps pure pursuit output.</summary>
+        public float MaxSteerAngle = 30f;
         public float KpSpeed = 300f, KiSpeed = 40f;
         public float MaxMotorTorque = 1200f, MaxBrakeTorque = 2500f;
         public float Wheelbase = 2.6f;
@@ -111,15 +116,23 @@ namespace MazeLifeLab
             float vRef = sRef.V;
             float err = vRef - vMeas;
             integ += err * fixedDt;
+            // speed PI control: torqueCmd can be negative (reverse)
             float torqueCmd = KpSpeed * err + KiSpeed * integ;
-            torqueCmd = Mathf.Clamp(torqueCmd, -MaxBrakeTorque, MaxMotorTorque);
+            // clamp symmetric motor torque for forward and reverse
+            torqueCmd = Mathf.Clamp(torqueCmd, -MaxMotorTorque, MaxMotorTorque);
+            // apply directly: negative motor => reverse, no brake
+            float motor = torqueCmd;
+            float brake = 0f;
 
-            float motor = 0f, brake = 0f;
-            if (torqueCmd >= 0f) { motor = torqueCmd; brake = 0f; }
-            else { motor = 0f; brake = Mathf.Abs(torqueCmd); }
-
-            // apply to wheels
-            float steerDeg = steer * Mathf.Rad2Deg;
+            // apply to wheels (invert steer sign to match wheel orientation)
+            float steerDeg;
+            // invert steer for forward vs reverse
+            if (sRef.V >= 0f)
+                steerDeg = -steer * Mathf.Rad2Deg;
+            else
+                steerDeg = steer * Mathf.Rad2Deg;
+            // clamp to maximum steering capability
+            steerDeg = Mathf.Clamp(steerDeg, -MaxSteerAngle, MaxSteerAngle);
             if (fl != null) { fl.steerAngle = steerDeg; fl.motorTorque = motor; fl.brakeTorque = brake; }
             if (fr != null) { fr.steerAngle = steerDeg; fr.motorTorque = motor; fr.brakeTorque = brake; }
             if (rl != null) { rl.motorTorque = 0f; rl.brakeTorque = brake; }
