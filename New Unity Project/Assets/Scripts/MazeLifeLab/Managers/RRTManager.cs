@@ -531,6 +531,17 @@ namespace MazeLifeLab
                 File.WriteAllBytes(path, tex.EncodeToPNG());
                 Debug.Log($"Scene screenshot saved: {path}");
                 AssetDatabase.Refresh();
+                // also dump the Editor Console next to the screenshot for easier debugging
+                try
+                {
+                    string logPath = Path.Combine(dir, Path.GetFileNameWithoutExtension(filename) + "_console.txt");
+                    DumpEditorConsole(logPath);
+                    Debug.Log($"Editor console dumped: {logPath}");
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("Failed to dump editor console: " + ex.Message);
+                }
                 UnityEngine.Object.DestroyImmediate(tex);
             }
             finally
@@ -593,6 +604,63 @@ namespace MazeLifeLab
             Debug.LogWarning("MakeSceneScreenshot is only available in the Unity Editor.");
 #endif
         }
+
+
+#if UNITY_EDITOR
+        void DumpEditorConsole(string outPath)
+        {
+            // Uses internal UnityEditor.LogEntries via reflection to extract console messages.
+            var logEntriesType = Type.GetType("UnityEditor.LogEntries, UnityEditor");
+            var logEntryType = Type.GetType("UnityEditor.LogEntry, UnityEditor");
+            if (logEntriesType == null || logEntryType == null)
+            {
+                File.WriteAllText(outPath, "Editor LogEntries API not available.");
+                return;
+            }
+
+            var getCount = logEntriesType.GetMethod("GetCount", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+            var getEntry = logEntriesType.GetMethod("GetEntryInternal", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+            if (getCount == null || getEntry == null)
+            {
+                File.WriteAllText(outPath, "Editor LogEntries methods not found.");
+                return;
+            }
+
+            int count = (int)getCount.Invoke(null, null);
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"Editor Console Dump - {DateTime.Now:O}");
+            sb.AppendLine($"Entries: {count}");
+            sb.AppendLine();
+
+            // create a LogEntry instance
+            var entry = Activator.CreateInstance(logEntryType);
+            for (int i = 0; i < count; i++)
+            {
+                object[] args = new object[] { i, entry };
+                // Attempt to call GetEntryInternal
+                try { getEntry.Invoke(null, args); } catch { }
+
+                var condF = logEntryType.GetField("condition", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+                var stackF = logEntryType.GetField("stacktrace", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+                var modeF = logEntryType.GetField("mode", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+                var fileF = logEntryType.GetField("file", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+                var lineF = logEntryType.GetField("line", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+
+                string cond = condF != null ? condF.GetValue(entry) as string : "";
+                string st = stackF != null ? stackF.GetValue(entry) as string : "";
+                object mode = modeF != null ? modeF.GetValue(entry) : null;
+                string file = fileF != null ? fileF.GetValue(entry) as string : "";
+                int line = lineF != null ? (int)lineF.GetValue(entry) : 0;
+
+                sb.AppendLine($"[{i}] mode={mode} file={file} line={line}");
+                sb.AppendLine(cond);
+                if (!string.IsNullOrEmpty(st)) sb.AppendLine(st);
+                sb.AppendLine(new string('-', 80));
+            }
+
+            File.WriteAllText(outPath, sb.ToString());
+        }
+#endif
 
     }
 }
