@@ -582,5 +582,17 @@ namespace MazeLifeLab
         }
 #endif
 
+        /// <summary>
+        /// Public wrapper to request a scene screenshot from the inspector or other editor code.
+        /// </summary>
+        public void MakeSceneScreenshot()
+        {
+#if UNITY_EDITOR
+            CaptureSceneScreenshot("manual");
+#else
+            Debug.LogWarning("MakeSceneScreenshot is only available in the Unity Editor.");
+#endif
+        }
+
     }
 }
