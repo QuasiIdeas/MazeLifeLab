@@ -1,0 +1,39 @@
+Context:
+- Project: MazeLifeLab (Unity). You are given telemetry, console logs, and screenshots captured during a single run.
+- Goal: diagnose and fix steering/actuation issues in the executor/controller using only the provided artifacts. Produce minimal, safe code patches (apply_patch style) and clear reproduce/test steps.
+
+Attached files (replace below if needed):
+- telemetry CSV: TelemetryLogs/telemetry_latest.csv  (header: time,X,Y,theta_rad,V,steerFL_deg,steerFR_deg,motorFL,motorFR,motorRL,motorRR,brakeFL,brakeFR,brakeRL,brakeRR,plannerNodes,hasSolution,execCompleted,lateralError,headingError)
+- console log: Logs/console.txt
+- screenshots: Screenshots/*.png
+
+Analysis steps (perform in order):
+1) Validate telemetry format and basic sanity checks:
+   - Confirm timestamps increase, count of samples > 10.
+   - Confirm existence of planner/executor flags (plannerNodes, hasSolution, execCompleted).
+2) Steering sign analysis:
+   - Compute heading derivative (dtheta/dt or delta position projection) and cross-track error wrt planned path.
+   - Correlate steer commands (steerFL_deg/steerFR_deg or extSteer entries in console) with heading error and desired curvature.
+   - Determine whether steer sign is inverted relative to desired heading correction: e.g., when heading_error>0, steer should have sign to reduce it. Identify time ranges where steer*heading_error < 0 persistently.
+3) Timing/latency:
+   - Measure delay between command issuance (console or telemetry steer fields) and change in heading/V. Report typical latency and sample indices where system is unresponsive.
+4) Motor/brake analysis:
+   - Correlate motor torques with measured speed V. Verify sign consistency (positive torque increases forward speed in forward axis). Detect cases when motor sign is opposite to expected.
+5) Collision/edge cases:
+   - Using console logs, find moments of collision or abrupt stops and correlate with the telemetry timestamps to isolate pre-crash commands.
+6) Synthesize root causes:
+   - Based on above, classify probable causes: steer sign inversion, wrong theta convention (Atan2 mismatch), WheelCollider orientation, CarController overwrites, delayed command application, etc.
+7) Provide patches and tests:
+   - Provide an apply_patch block(s) with minimal changes to the repository implementing the fix (e.g., invert sign in TapeExecutor, change theta computation in RRTManager.BeginPlanning to Atan2, or use CarController.ApplyExternalControl in TrackerExecutor etc.).
+   - Each patch must be accompanied by a test procedure: how to run Play once and which logs/CSV fields to inspect to confirm fix.
+
+Deliverables:
+- Short summary: 2-3 sentences of root cause and recommended fix.
+- Detailed evidence: specific lines from telemetry and console that support diagnosis (timestamp, time index, steer value, heading, error).
+- Concrete apply_patch blocks for the repo files to apply the fix.
+- Exact test steps to validate.
+
+Notes:
+- Do not propose large refactors. Minimal, focused changes only.
+- If multiple plausible fixes exist, prefer the one that is robust and lowest risk (e.g., convert heading convention consistently rather than inverting every steer in many places).
+
