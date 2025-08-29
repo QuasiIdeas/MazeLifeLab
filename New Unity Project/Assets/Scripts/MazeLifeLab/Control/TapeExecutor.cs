@@ -16,6 +16,7 @@ namespace MazeLifeLab
         float segElapsed = 0f;
         float steerDeg = 0f;
         float motorTorque = 0f, brakeTorque = 0f;
+        CarController carCtrl = null;
 
         public float MaxMotorTorque = 1200f;
         public float MaxBrakeTorque = 2500f;
@@ -41,6 +42,8 @@ namespace MazeLifeLab
         public void Start()
         {
             segIdx = 0; segElapsed = 0f; Completed = false;
+            // try to find attached CarController if available on the root transform
+            carCtrl = null;
         }
 
         public void Stop()
@@ -74,23 +77,36 @@ namespace MazeLifeLab
             {
                 motorTorque = 0f; brakeTorque = Mathf.Abs(torque);
             }
-            // apply steer
-            if (fl != null) { fl.steerAngle = steerDeg; }
-            if (fr != null) { fr.steerAngle = steerDeg; }
-            // apply motor/brake depending on drive config
-            if (FrontWheelDrive)
+            // if a CarController exists, prefer using its external control API so it doesn't overwrite our commands
+            if (carRoot != null && carCtrl == null)
+                carCtrl = carRoot.GetComponent<CarController>();
+
+            if (carCtrl != null)
             {
-                if (fl != null) { fl.motorTorque = motorTorque; fl.brakeTorque = brakeTorque; }
-                if (fr != null) { fr.motorTorque = motorTorque; fr.brakeTorque = brakeTorque; }
-                if (rl != null) { rl.motorTorque = 0f; rl.brakeTorque = brakeTorque; }
-                if (rr != null) { rr.motorTorque = 0f; rr.brakeTorque = brakeTorque; }
+                carCtrl.ApplyExternalControl(steerDeg, motorTorque, brakeTorque);
             }
             else
             {
-                if (rl != null) { rl.motorTorque = motorTorque; rl.brakeTorque = brakeTorque; }
-                if (rr != null) { rr.motorTorque = motorTorque; rr.brakeTorque = brakeTorque; }
-                if (fl != null) { fl.motorTorque = 0f; fl.brakeTorque = brakeTorque; }
-                if (fr != null) { fr.motorTorque = 0f; fr.brakeTorque = brakeTorque; }
+                if (fl != null) { fl.steerAngle = steerDeg; }
+                if (fr != null) { fr.steerAngle = steerDeg; }
+            }
+            // apply motor/brake depending on drive config
+            if (carCtrl == null)
+            {
+                if (FrontWheelDrive)
+                {
+                    if (fl != null) { fl.motorTorque = motorTorque; fl.brakeTorque = brakeTorque; }
+                    if (fr != null) { fr.motorTorque = motorTorque; fr.brakeTorque = brakeTorque; }
+                    if (rl != null) { rl.motorTorque = 0f; rl.brakeTorque = brakeTorque; }
+                    if (rr != null) { rr.motorTorque = 0f; rr.brakeTorque = brakeTorque; }
+                }
+                else
+                {
+                    if (rl != null) { rl.motorTorque = motorTorque; rl.brakeTorque = brakeTorque; }
+                    if (rr != null) { rr.motorTorque = motorTorque; rr.brakeTorque = brakeTorque; }
+                    if (fl != null) { fl.motorTorque = 0f; fl.brakeTorque = brakeTorque; }
+                    if (fr != null) { fr.motorTorque = 0f; fr.brakeTorque = brakeTorque; }
+                }
             }
 
             // advance by elapsed time rather than tick count so it's independent of fixedDeltaTime
@@ -107,6 +123,13 @@ namespace MazeLifeLab
             }
 
             if (segIdx >= tape.Count) Completed = true;
+        }
+
+        public void Stop()
+        {
+            // release external control if we had a CarController
+            if (carCtrl != null) carCtrl.ReleaseExternalControl();
+            Completed = true;
         }
     }
 }
