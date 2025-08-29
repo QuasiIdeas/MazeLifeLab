@@ -331,6 +331,23 @@ namespace MazeLifeLab
             }
         }
 
+
+        /// <summary>
+        /// Simple IMGUI controls for quick diagnostics while playing in the Editor.
+        /// Provides a button to run the orientation diagnostic without using keyboard focus.
+        /// </summary>
+        void OnGUI()
+        {
+            if (!Application.isPlaying) return;
+            var rect = new Rect(10, 10, 260, 26);
+            if (GUI.Button(rect, "Run Orientation Diagnostic (O / 0)"))
+            {
+                Debug.Log("RRTManager: RunOrientationDiagnostic requested (GUI)");
+                RunOrientationDiagnostic();
+            }
+        }
+
+
        void RunOrientationDiagnostic()
        {
            if (CarRoot == null)
