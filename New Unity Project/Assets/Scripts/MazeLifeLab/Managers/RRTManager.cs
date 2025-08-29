@@ -364,6 +364,45 @@ namespace MazeLifeLab
                     }
                 }
             }
+            // planner quick controls
+            var rect3 = new Rect(10, 70, 260, 22);
+            GUI.Label(rect3, $"Planner: Nodes={planner?.NodeCount ?? 0}  HasSolution={(planner!=null? planner.HasSolution.ToString():"n/a")}");
+            var r4 = new Rect(10, 96, 130, 24);
+            var r5 = new Rect(140, 96, 130, 24);
+            if (GUI.Button(r4, "Step Planner (512)"))
+            {
+                if (planner != null) { planner.Step(512); Debug.Log($"Planner stepped, Nodes={planner.NodeCount}, HasSolution={planner.HasSolution}"); }
+            }
+            if (GUI.Button(r5, "Run Planner (limit)"))
+            {
+                if (planner != null)
+                {
+                    int it = 0;
+                    int limit = planner.MaxNodes;
+                    while (!planner.HasSolution && planner.NodeCount < limit && it++ < 2000) planner.Step(256);
+                    Debug.Log($"RunPlanner finished: Nodes={planner.NodeCount}, HasSolution={planner.HasSolution}");
+                    if (planner.HasSolution) { lastTraj = planner.ExtractTrajectory(); lastTape = planner.ExtractTape(); }
+                }
+            }
+
+            var r6 = new Rect(10, 128, 130, 24);
+            var r7 = new Rect(140, 128, 130, 24);
+            if (GUI.Button(r6, "Disable Walls"))
+            {
+                if (col != null) { col.SetWalls(new System.Collections.Generic.List<UnityEngine.Vector2[]>()); Debug.Log("Collision walls cleared"); }
+            }
+            if (GUI.Button(r7, "Rebuild Walls"))
+            {
+                BuildWallsFromGroups(); Debug.Log("Rebuilt walls from groups");
+            }
+
+            var r8 = new Rect(10, 160, 260, 24);
+            if (GUI.Button(r8, "Increase MaxNodes x2"))
+            {
+                var rp = planner as RRTPlanner;
+                if (rp != null) { rp.MaxNodes *= 2; Debug.Log($"MaxNodes now {rp.MaxNodes}"); }
+            }
+
         }
 
 
