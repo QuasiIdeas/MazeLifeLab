@@ -2,6 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace MazeLifeLab
 {
@@ -284,6 +288,9 @@ namespace MazeLifeLab
             {
                 lastTraj = planner.ExtractTrajectory();
                 lastTape = planner.ExtractTape();
+#if UNITY_EDITOR
+                try { CaptureSceneScreenshot("solution"); } catch (Exception ex) { Debug.LogWarning("CaptureSceneScreenshot failed: " + ex.Message); }
+#endif
                 if (UseTracker) StartTrackerExecution(); else StartTapeExecution();
             }
             else
@@ -479,6 +486,47 @@ namespace MazeLifeLab
            debugTrajDir = trajDir;
            debugCarFwd = carFwd;
        }
+
+
+#if UNITY_EDITOR
+        void CaptureSceneScreenshot(string tag = "")
+        {
+            var sv = SceneView.lastActiveSceneView;
+            if (sv == null) { Debug.LogWarning("No active SceneView for screenshot"); return; }
+            var cam = sv.camera;
+            if (cam == null) { Debug.LogWarning("SceneView camera missing"); return; }
+
+            int w = cam.pixelWidth > 0 ? cam.pixelWidth : 1600;
+            int h = cam.pixelHeight > 0 ? cam.pixelHeight : 900;
+            var rt = new RenderTexture(w, h, 24);
+            var prev = RenderTexture.active;
+            var prevT = cam.targetTexture;
+            try
+            {
+                cam.targetTexture = rt;
+                cam.Render();
+                RenderTexture.active = rt;
+                var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
+                tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+                tex.Apply();
+
+                string dir = Path.Combine(Application.dataPath, "..", "Screenshots");
+                if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+                string filename = $"SceneShot_{tag}_{DateTime.Now:yyyyMMdd_HHmmss}.png";
+                string path = Path.Combine(dir, filename);
+                File.WriteAllBytes(path, tex.EncodeToPNG());
+                Debug.Log($"Scene screenshot saved: {path}");
+                AssetDatabase.Refresh();
+                UnityEngine.Object.DestroyImmediate(tex);
+            }
+            finally
+            {
+                cam.targetTexture = prevT;
+                RenderTexture.active = prev;
+                rt.Release();
+            }
+        }
+#endif
 
     }
 }
