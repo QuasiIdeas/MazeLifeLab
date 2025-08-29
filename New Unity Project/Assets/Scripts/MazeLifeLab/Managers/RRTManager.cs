@@ -345,6 +345,22 @@ namespace MazeLifeLab
                 Debug.Log("RRTManager: RunOrientationDiagnostic requested (GUI)");
                 RunOrientationDiagnostic();
             }
+            var rect2 = new Rect(10, 40, 260, 26);
+            if (GUI.Button(rect2, "Dump Trajectory (first 16)"))
+            {
+                if (lastTraj == null) { Debug.Log("Dump Trajectory: lastTraj == null"); }
+                else
+                {
+                    Debug.Log($"Dump Trajectory: count={lastTraj.Count}, duration={lastTraj.Duration:F2}s");
+                    int n = Math.Min(16, lastTraj.Count);
+                    for (int i = 0; i < n; i++)
+                    {
+                        var s = lastTraj.S[i];
+                        var t = (lastTraj.T != null && lastTraj.T.Count > i) ? lastTraj.T[i] : 0f;
+                        Debug.Log($"traj[{i}] t={t:F3} X={s.X:F3} Y={s.Y:F3} Theta={s.Theta:F3} V={s.V:F3}");
+                    }
+                }
+            }
         }
 
 
