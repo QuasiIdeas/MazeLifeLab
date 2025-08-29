@@ -25,6 +25,8 @@ namespace MazeLifeLab
         Collision2D col;
         IRRTPlanner planner;
         IExecutor exec;
+        /// <summary>If true, begin planning automatically a short time after Play starts.</summary>
+        public bool AutoPlanOnPlay = true;
 
         enum State { Manual, Planning, ExecutingTape, ExecutingTrack }
         State state = State.Manual;
@@ -57,6 +59,19 @@ namespace MazeLifeLab
             tr.Manager = this;
             if (tr.CarRoot == null) tr.CarRoot = CarRoot;
             if (tr.FL == null) { tr.FL = FL; tr.FR = FR; tr.RL = RL; tr.RR = RR; }
+
+            // optionally start planning automatically shortly after Play to allow MazeGen to create walls
+            if (AutoPlanOnPlay)
+            {
+                StartCoroutine(AutoBeginAfterDelay());
+            }
+        }
+
+        IEnumerator AutoBeginAfterDelay()
+        {
+            // small delay to allow other Start() methods (e.g., MazeGen) to run and spawn walls
+            yield return new WaitForSeconds(0.3f);
+            try { BeginPlanning(); } catch { }
         }
 
         /// <summary>
