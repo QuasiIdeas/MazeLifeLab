@@ -510,6 +510,20 @@ namespace MazeLifeLab
                 tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
                 tex.Apply();
 
+                // overlay planned trajectory (gizmos are drawn by the editor and may not appear in the camera capture)
+                try
+                {
+                    if (lastTraj != null && lastTraj.Count > 0)
+                    {
+                        var pts = lastTraj.ToWorldPolyline();
+                        DrawPolylineOnTexture(tex, cam, pts, Color.green, 2);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("Failed to draw trajectory overlay: " + ex.Message);
+                }
+
                 string dir = Path.Combine(Application.dataPath, "..", "Screenshots");
                 if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
                 string filename = $"SceneShot_{tag}_{DateTime.Now:yyyyMMdd_HHmmss}.png";
@@ -525,6 +539,46 @@ namespace MazeLifeLab
                 RenderTexture.active = prev;
                 rt.Release();
             }
+        }
+#endif
+
+
+#if UNITY_EDITOR
+        // draw a polyline in texture space by projecting world points through the provided camera
+        static void DrawPolylineOnTexture(Texture2D tex, Camera cam, Vector3[] pts, Color color, int thickness = 1)
+        {
+            if (tex == null || cam == null || pts == null || pts.Length < 2) return;
+            int w = tex.width; int h = tex.height;
+            // For each segment, sample along the segment and set pixels
+            for (int i = 0; i < pts.Length - 1; i++)
+            {
+                Vector3 a = pts[i];
+                Vector3 b = pts[i + 1];
+                Vector3 sa = cam.WorldToScreenPoint(a);
+                Vector3 sb = cam.WorldToScreenPoint(b);
+                // skip points behind camera
+                if (sa.z <= 0f && sb.z <= 0f) continue;
+                // convert to texture coordinates (origin bottom-left)
+                float ax = sa.x; float ay = sa.y;
+                float bx = sb.x; float by = sb.y;
+                int steps = Mathf.Max(1, Mathf.CeilToInt(Vector2.Distance(new Vector2(ax, ay), new Vector2(bx, by))));
+                for (int s = 0; s <= steps; s++)
+                {
+                    float t = (float)s / steps;
+                    int px = Mathf.RoundToInt(Mathf.Lerp(ax, bx, t));
+                    int py = Mathf.RoundToInt(Mathf.Lerp(ay, by, t));
+                    // clamp to texture rect
+                    for (int dx = -thickness; dx <= thickness; dx++)
+                        for (int dy = -thickness; dy <= thickness; dy++)
+                        {
+                            int xx = px + dx; int yy = py + dy;
+                            if (xx < 0 || xx >= w || yy < 0 || yy >= h) continue;
+                            // tex coordinate y is bottom-left, same as screen
+                            tex.SetPixel(xx, yy, color);
+                        }
+                }
+            }
+            tex.Apply();
         }
 #endif
 
