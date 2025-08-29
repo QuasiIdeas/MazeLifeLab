@@ -362,25 +362,30 @@ namespace MazeLifeLab
            }
             // compute initial trajectory direction: prefer the first state that is a non-zero offset from the root.
             var a = lastTraj.S[0];
+            Debug.Log($"RunOrientationDiagnostic: traj samples={lastTraj.Count}, Tcount={(lastTraj.T!=null? lastTraj.T.Count : 0)}")
             Vector3 trajDir = Vector3.zero;
             for (int i = 1; i < lastTraj.S.Count; i++){
                 var bb = lastTraj.S[i];
                 var d = new Vector3(bb.X - a.X, 0f, bb.Y - a.Y);
                 if (d.sqrMagnitude > 1e-6f) { trajDir = d; break; }
             }
+            Debug.Log($"RunOrientationDiagnostic: initial loop trajDir={trajDir}");
             // fallback: try sampling a small time delta ahead if timestamps exist
             if (trajDir.sqrMagnitude <= 1e-6f && lastTraj.T != null && lastTraj.T.Count >= 1)
             {
                 float t0 = lastTraj.T[0];
                 float sampleT = t0 + Mathf.Max(0.05f, 0.1f);
+                Debug.Log($"RunOrientationDiagnostic: sampling at t={sampleT} (t0={t0})");
                 try
                 {
                     var s2 = lastTraj.SampleByTime(sampleT);
                     trajDir = new Vector3(s2.X - a.X, 0f, s2.Y - a.Y);
+                    Debug.Log($"RunOrientationDiagnostic: sampled state s2=({s2.X},{s2.Y}) trajDir now={trajDir}");
                 }
-                catch { }
+                catch (Exception ex) { Debug.LogWarning("RunOrientationDiagnostic: sample failed: " + ex.Message); }
             }
 
+            Debug.Log($"RunOrientationDiagnostic: after sample fallback trajDir={trajDir} mag={trajDir.sqrMagnitude}");
             if (trajDir.sqrMagnitude <= 1e-6f)
             {
                 Debug.LogWarning("RunOrientationDiagnostic: trajectory direction is degenerate (all initial samples identical).");
