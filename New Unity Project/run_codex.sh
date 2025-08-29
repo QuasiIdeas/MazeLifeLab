@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # run_codex.sh - helper to run codex CLI with telemetry, console log and screenshots
-# Usage: ./run_codex.sh [telemetry.csv] [console.txt] [screenshot.png]
+# Usage: ./run_codex.sh [screenshot.png]
 set -euo pipefail
 
 CODEx=${CODEx:-codex}
@@ -21,29 +21,10 @@ pick_latest(){
   return 1
 }
 
-# telemetry
+
+# screenshot (optional latest screenshot as first argument)
 if [ $# -ge 1 ] && [ -n "$1" ]; then
-  TELEMETRY="$1"
-else
-  TELEMETRY=$(pick_latest "TelemetryLogs" "*.csv" || true)
-  if [ -z "$TELEMETRY" ]; then
-    TELEMETRY="TelemetryLogs/telemetry_latest.csv"
-  fi
-fi
-
-# console
-if [ $# -ge 2 ] && [ -n "$2" ]; then
-  CONSOLE_LOG="$2"
-else
-  CONSOLE_LOG=$(pick_latest "Logs" "*.txt" || true)
-  if [ -z "$CONSOLE_LOG" ]; then
-    CONSOLE_LOG="Logs/console.txt"
-  fi
-fi
-
-# screenshot
-if [ $# -ge 3 ] && [ -n "$3" ]; then
-  SCREEN1="$3"
+  SCREEN1="$1"
 else
   SCREEN1=$(pick_latest "Screenshots" "*.png" || true)
   if [ -z "$SCREEN1" ]; then
@@ -56,26 +37,45 @@ OUTPUT="codex_result_${TIMESTAMP}.txt"
 
 echo "codex CLI: ${CODEx}"
 echo "prompt file: ${PROMPT_FILE}"
-echo "telemetry: ${TELEMETRY}"
-echo "console: ${CONSOLE_LOG}"
+echo "model: ${MODEL:-gpt-5-mini}"
 echo "screenshot: ${SCREEN1}"
 echo "output: ${OUTPUT}"
 
 echo "Running Codex..." > "$OUTPUT"
 
-# build --files argument only including existing files
+# Prepare input files list
+# Prepare input files list: only images (screenshots) go via -i
 FILES_ARG=()
-if [ -n "$TELEMETRY" ] && [ -f "$TELEMETRY" ]; then FILES_ARG+=("$TELEMETRY"); fi
-if [ -n "$CONSOLE_LOG" ] && [ -f "$CONSOLE_LOG" ]; then FILES_ARG+=("$CONSOLE_LOG"); fi
-if [ -n "$SCREEN1" ] && [ -f "$SCREEN1" ]; then FILES_ARG+=("$SCREEN1"); fi
-
-if [ ${#FILES_ARG[@]} -gt 0 ]; then
-  # join by comma as in Windows script
-  IFS=','; FILES_JOINED="${FILES_ARG[*]}"; unset IFS
-  "$CODEx" chat --model gpt-5-mini --prompt-file "$PROMPT_FILE" --files "$FILES_JOINED" >> "$OUTPUT" 2>&1 || rc=$?
-else
-  "$CODEx" chat --model gpt-5-mini --prompt-file "$PROMPT_FILE" >> "$OUTPUT" 2>&1 || rc=$?
+if [ -n "$SCREEN1" ] && [ -f "$SCREEN1" ]; then
+  FILES_ARG+=("$SCREEN1")
 fi
+
+# Run codex CLI: build prompt from prompt file, images only for screenshots
+MODEL=${MODEL:-gpt-5-mini}
+# Base prompt
+PROMPT_TEXT=$(<"$PROMPT_FILE")
+# Disable telemetry and console log inclusion
+if false; then
+# Append telemetry data into the prompt text
+if [ -n "$TELEMETRY" ] && [ -f "$TELEMETRY" ]; then
+  PROMPT_TEXT+=$'\n\n--- Telemetry: '"$TELEMETRY"$' ---\n'
+  PROMPT_TEXT+="$(<"$TELEMETRY")"
+fi
+# Append console log into the prompt text
+if [ -n "$CONSOLE_LOG" ] && [ -f "$CONSOLE_LOG" ]; then
+  PROMPT_TEXT+=$'\n\n--- Console Log: '"$CONSOLE_LOG"$' ---\n'
+  PROMPT_TEXT+="$(<"$CONSOLE_LOG")"
+fi
+fi  # end disable telemetry/console inclusion
+# Build codex CLI command
+CMD=("$CODEx" -m "$MODEL")
+# Include screenshots as image inputs
+for img in "${FILES_ARG[@]}"; do
+  CMD+=( -i "$img" )
+done
+# Finally, the prompt text
+CMD+=( "$PROMPT_TEXT" )
+"${CMD[@]}" 
 
 rc=${rc:-0}
 if [ $rc -ne 0 ]; then

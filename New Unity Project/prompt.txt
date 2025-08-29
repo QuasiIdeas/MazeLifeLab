@@ -3,8 +3,8 @@ Context:
 - Goal: diagnose and fix steering/actuation issues in the executor/controller using only the provided artifacts. Produce minimal, safe code patches (apply_patch style) and clear reproduce/test steps.
 
 Attached files (replace below if needed):
-- telemetry CSV: TelemetryLogs/telemetry_latest.csv  (header: time,X,Y,theta_rad,V,steerFL_deg,steerFR_deg,motorFL,motorFR,motorRL,motorRR,brakeFL,brakeFR,brakeRL,brakeRR,plannerNodes,hasSolution,execCompleted,lateralError,headingError)
-- console log: Logs/console.txt
+- telemetry CSV: take latest csv file in TelemetryLogs folder  (header: time,X,Y,theta_rad,V,steerFL_deg,steerFR_deg,motorFL,motorFR,motorRL,motorRR,brakeFL,brakeFR,brakeRL,brakeRR,plannerNodes,hasSolution,execCompleted,lateralError,headingError)
+- console log: latest txt file in Screenshots
 - screenshots: Screenshots/*.png
 
 Analysis steps (perform in order):

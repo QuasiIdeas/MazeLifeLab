@@ -21,7 +21,7 @@ if "%1"=="" (
 
 REM Determine console log (arg2 overrides)
 if "%2"=="" (
-  set LOG_DIR=Logs
+  set LOG_DIR=Screenshots
   set CONSOLE_LOG=
   for /f "delims=" %%F in ('dir "%LOG_DIR%\*.txt" /b /a-d /o:-d 2^>nul') do (
     set CONSOLE_LOG=%%F
